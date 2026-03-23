@@ -29,7 +29,6 @@
             min-height: 100vh;
         }
 
-        /* Header */
         .header {
             border-bottom: 1px solid var(--border);
             padding: 20px 32px;
@@ -43,345 +42,167 @@
             background: rgba(10, 10, 15, 0.9);
         }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .logo { display: flex; align-items: center; gap: 12px; }
 
         .logo-icon {
-            width: 36px;
-            height: 36px;
+            width: 36px; height: 36px;
             background: linear-gradient(135deg, var(--accent), #a29bfe);
             border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             font-size: 18px;
         }
 
-        .logo-text {
-            font-size: 18px;
-            font-weight: 600;
-            letter-spacing: -0.3px;
-        }
-
+        .logo-text { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
         .logo-text span { color: var(--text-dim); font-weight: 400; }
 
         .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display: flex; align-items: center; gap: 8px;
             padding: 6px 14px;
             border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 13px; font-weight: 500;
         }
+        .status-badge.active { background: rgba(0,214,143,.1); color: var(--green); border: 1px solid rgba(0,214,143,.2); }
+        .status-badge.inactive { background: rgba(136,136,160,.1); color: var(--text-dim); border: 1px solid var(--border); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+        .status-badge.active .status-dot { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-        .status-badge.active {
-            background: rgba(0, 214, 143, 0.1);
-            color: var(--green);
-            border: 1px solid rgba(0, 214, 143, 0.2);
-        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 32px; }
 
-        .status-badge.inactive {
-            background: rgba(136, 136, 160, 0.1);
-            color: var(--text-dim);
-            border: 1px solid var(--border);
-        }
+        /* URL input section */
+        .input-section { margin-bottom: 28px; }
+        .input-label { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; display: block; }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: currentColor;
-        }
-
-        .status-badge.active .status-dot {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        /* Main layout */
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 32px;
-        }
-
-        /* Search / Topic Input */
-        .search-section {
-            margin-bottom: 32px;
-        }
-
-        .search-box {
-            display: flex;
-            gap: 12px;
-            align-items: stretch;
-        }
-
-        .search-input {
-            flex: 1;
-            padding: 14px 20px;
+        .url-textarea {
+            width: 100%;
+            min-height: 110px;
+            padding: 14px 18px;
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             color: var(--text);
-            font-size: 16px;
+            font-size: 13px;
+            font-family: 'Inter', monospace;
+            line-height: 1.6;
+            resize: vertical;
             outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            transition: border-color .2s, box-shadow .2s;
         }
-
-        .search-input:focus {
+        .url-textarea:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 3px var(--accent-glow);
         }
+        .url-textarea::placeholder { color: var(--text-dim); }
 
-        .search-input::placeholder { color: var(--text-dim); }
+        .btn-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 
         .btn {
-            padding: 14px 28px;
+            padding: 11px 24px;
             border-radius: var(--radius);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s;
-            white-space: nowrap;
+            font-size: 14px; font-weight: 600;
+            cursor: pointer; border: none;
+            transition: all .2s; white-space: nowrap;
         }
-
-        .btn-primary {
-            background: var(--accent);
-            color: white;
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: #5b4bd5; transform: translateY(-1px); box-shadow: 0 4px 12px var(--accent-glow); }
+        .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+        .btn-secondary {
+            background: rgba(108,92,231,.08);
+            color: var(--accent);
+            border: 1px solid rgba(108,92,231,.25);
         }
+        .btn-secondary:hover { background: rgba(108,92,231,.16); }
+        .btn-danger { background: rgba(255,107,107,.1); color: var(--red); border: 1px solid rgba(255,107,107,.2); }
+        .btn-danger:hover { background: rgba(255,107,107,.2); }
 
-        .btn-primary:hover {
-            background: #5b4bd5;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px var(--accent-glow);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-danger {
-            background: rgba(255, 107, 107, 0.1);
-            color: var(--red);
-            border: 1px solid rgba(255, 107, 107, 0.2);
-        }
-
-        .btn-danger:hover {
-            background: rgba(255, 107, 107, 0.2);
-        }
-
-        /* Info bar */
+        /* Stats bar */
         .info-bar {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 28px;
         }
-
         .info-card {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 18px 20px;
+            padding: 16px 18px;
         }
+        .info-card label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 5px; }
+        .info-card .value { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
 
-        .info-card label {
-            display: block;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-dim);
-            margin-bottom: 6px;
-        }
-
-        .info-card .value {
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        /* Tables */
+        /* Table */
         .section-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 15px; font-weight: 600;
+            margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px;
         }
-
         .table-container {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             overflow: hidden;
-            margin-bottom: 32px;
+            margin-bottom: 28px;
         }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
+        table { width: 100%; border-collapse: collapse; }
         th {
-            text-align: left;
-            padding: 12px 16px;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            text-align: left; padding: 11px 14px;
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
             color: var(--text-dim);
             background: var(--surface2);
             border-bottom: 1px solid var(--border);
         }
-
-        td {
-            padding: 14px 16px;
-            font-size: 14px;
-            border-bottom: 1px solid var(--border);
-        }
-
+        td { padding: 13px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
         tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(108,92,231,.03); }
 
-        tr:hover td { background: rgba(108, 92, 231, 0.03); }
-
-        .price {
-            font-weight: 600;
-            font-variant-numeric: tabular-nums;
-        }
-
+        .price { font-weight: 600; font-variant-numeric: tabular-nums; }
         .change-up { color: var(--green); }
         .change-down { color: var(--red); }
         .change-flat { color: var(--text-dim); }
+        .remove-btn {
+            background: none; border: none; cursor: pointer;
+            color: var(--text-dim); font-size: 16px; padding: 2px 6px;
+            border-radius: 4px; transition: color .15s;
+        }
+        .remove-btn:hover { color: var(--red); }
+        .market-link { color: var(--accent); text-decoration: none; font-size: 12px; }
+        .market-link:hover { text-decoration: underline; }
 
-        /* Alerts section */
+        /* Alerts */
         .alert-item {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 18px 20px;
-            margin-bottom: 12px;
+            padding: 16px 18px;
+            margin-bottom: 10px;
             border-left: 3px solid var(--accent);
         }
-
         .alert-item.up { border-left-color: var(--green); }
         .alert-item.down { border-left-color: var(--red); }
+        .alert-item.volume { border-left-color: var(--yellow); }
+        .alert-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 12px; }
+        .alert-title { font-weight: 600; font-size: 14px; flex: 1; }
+        .alert-time { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+        .alert-meta { font-size: 13px; color: var(--text-dim); margin-bottom: 6px; }
+        .alert-changes { font-size: 13px; font-weight: 500; margin-bottom: 10px; display: flex; flex-direction: column; gap: 3px; }
+        .alert-analysis { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
 
-        .alert-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .alert-title {
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .alert-time {
-            font-size: 12px;
-            color: var(--text-dim);
-        }
-
-        .alert-change {
-            font-size: 13px;
-            margin-bottom: 10px;
-            font-weight: 500;
-        }
-
-        .alert-analysis {
-            font-size: 13px;
-            color: var(--text-dim);
-            line-height: 1.6;
-        }
-
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-dim);
-        }
-
-        .empty-state .icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
-        .empty-state p {
-            font-size: 15px;
-            max-width: 400px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-
-        /* Loading spinner */
+        /* Empty / spinner */
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+        .empty-state .icon { font-size: 44px; margin-bottom: 14px; opacity: .5; }
+        .empty-state p { font-size: 14px; max-width: 440px; margin: 0 auto; line-height: 1.7; }
         .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 8px;
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid var(--border); border-top-color: var(--accent);
+            border-radius: 50%; animation: spin .8s linear infinite; margin-right: 6px;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Settings panel */
-        .settings-row {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-
-        .setting-field {
-            flex: 1;
-            min-width: 160px;
-        }
-
-        .setting-field label {
-            display: block;
-            font-size: 12px;
-            color: var(--text-dim);
-            margin-bottom: 6px;
-        }
-
-        .setting-field input {
-            width: 100%;
-            padding: 10px 14px;
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-size: 14px;
-            outline: none;
-        }
-
-        .setting-field input:focus {
-            border-color: var(--accent);
-        }
-
-        /* Responsive */
         @media (max-width: 640px) {
             .container { padding: 16px; }
             .header { padding: 14px 16px; }
-            .search-box { flex-direction: column; }
+            .btn-row { flex-direction: column; }
             .btn { width: 100%; text-align: center; }
             .info-bar { grid-template-columns: 1fr 1fr; }
         }
@@ -404,21 +225,24 @@
 
 <div class="container">
 
-    <!-- Search -->
-    <div class="search-section">
-        <div class="search-box">
-            <input
-                type="text"
-                id="topicInput"
-                class="search-input"
-                placeholder="Enter a topic to track (e.g., Iran war, recession, bitcoin)..."
-                autofocus
-            >
+    <!-- URL Input -->
+    <div class="input-section">
+        <label class="input-label">Paste Kalshi market URLs to track (one per line):</label>
+        <textarea
+            id="urlInput"
+            class="url-textarea"
+            placeholder="https://kalshi.com/markets/kxgovca/california-governors-race/kxgovca-26&#10;https://kalshi.com/markets/kxirconflict/iran-war/kxirconflict-2026"
+            autofocus
+        ></textarea>
+        <div class="btn-row">
             <button id="trackBtn" class="btn btn-primary" onclick="startTracking()">
-                Start Tracking
+                Track These Markets
+            </button>
+            <button id="addBtn" class="btn btn-secondary" onclick="addMarkets()" style="display:none;">
+                + Add More Markets
             </button>
             <button id="stopBtn" class="btn btn-danger" onclick="stopTracking()" style="display:none;">
-                Stop
+                Stop All
             </button>
         </div>
     </div>
@@ -426,11 +250,7 @@
     <!-- Stats -->
     <div class="info-bar" id="infoBar" style="display:none;">
         <div class="info-card">
-            <label>Topic</label>
-            <div class="value" id="currentTopic">—</div>
-        </div>
-        <div class="info-card">
-            <label>Markets</label>
+            <label>Markets Tracked</label>
             <div class="value" id="marketCount">0</div>
         </div>
         <div class="info-card">
@@ -438,8 +258,12 @@
             <div class="value" id="alertCount">0</div>
         </div>
         <div class="info-card">
-            <label>Threshold</label>
-            <div class="value" id="threshold">10%</div>
+            <label>Price Threshold</label>
+            <div class="value" id="priceThreshold">10%</div>
+        </div>
+        <div class="info-card">
+            <label>Volume Threshold</label>
+            <div class="value" id="volThreshold">10%</div>
         </div>
     </div>
 
@@ -451,10 +275,12 @@
                 <thead>
                     <tr>
                         <th>Market</th>
-                        <th>Baseline</th>
-                        <th>Current</th>
-                        <th>Change</th>
+                        <th>YES (baseline)</th>
+                        <th>YES (now)</th>
+                        <th>Δ Price</th>
                         <th>Volume</th>
+                        <th>Δ Vol</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody id="marketsBody"></tbody>
@@ -471,7 +297,9 @@
     <!-- Empty state -->
     <div id="emptyState" class="empty-state">
         <div class="icon">🔍</div>
-        <p>Enter a topic above to start monitoring Kalshi prediction markets. You'll get Telegram alerts when prices move more than 10%.</p>
+        <p>Paste one or more Kalshi market URLs above to start tracking.
+        You'll get a Telegram alert whenever a price moves ≥10 % or
+        volume increases ≥10 % — checked every 2 hours, 7 AM – 9 PM PT.</p>
     </div>
 
 </div>
@@ -480,76 +308,129 @@
     const API = window.location.origin;
     let pollTimer = null;
 
-    // Topic input: enter to submit
-    document.getElementById('topicInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') startTracking();
+    // ── Submit on Ctrl+Enter in textarea ────────────────────────────────────
+    document.getElementById('urlInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) startTracking();
     });
 
+    // ── Parse URLs from textarea ─────────────────────────────────────────────
+    function getUrls() {
+        return document.getElementById('urlInput').value
+            .split('\n')
+            .map(s => s.trim())
+            .filter(s => s.length > 0);
+    }
+
+    // ── Track ────────────────────────────────────────────────────────────────
     async function startTracking() {
-        const topic = document.getElementById('topicInput').value.trim();
-        if (!topic) return;
+        const urls = getUrls();
+        if (!urls.length) { alert('Please paste at least one Kalshi market URL.'); return; }
 
         const btn = document.getElementById('trackBtn');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Starting...';
+        btn.innerHTML = '<span class="spinner"></span> Starting…';
 
         try {
             const resp = await fetch(`${API}/api/track`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topic }),
+                body: JSON.stringify({ urls }),
             });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.detail || 'Failed to start tracking');
 
-            if (!resp.ok) throw new Error('Failed to start tracking');
-
-            document.getElementById('stopBtn').style.display = '';
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('infoBar').style.display = '';
-            document.getElementById('marketsSection').style.display = '';
-            document.getElementById('alertsSection').style.display = '';
-
-            setStatus(true, topic);
+            showActiveUI();
             startPolling();
         } catch (err) {
             alert('Error: ' + err.message);
         } finally {
             btn.disabled = false;
-            btn.innerHTML = 'Start Tracking';
+            btn.innerHTML = 'Track These Markets';
         }
     }
 
-    async function stopTracking() {
+    // ── Add more ─────────────────────────────────────────────────────────────
+    async function addMarkets() {
+        const urls = getUrls();
+        if (!urls.length) { alert('Paste one or more URLs to add.'); return; }
+
+        const btn = document.getElementById('addBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Adding…';
+
         try {
-            await fetch(`${API}/api/stop`, { method: 'POST' });
-        } catch {}
-        setStatus(false);
-        stopPolling();
-        document.getElementById('stopBtn').style.display = 'none';
-    }
+            const resp = await fetch(`${API}/api/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ urls }),
+            });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.detail || 'Failed to add markets');
 
-    function setStatus(active, topic) {
-        const badge = document.getElementById('statusBadge');
-        const text = document.getElementById('statusText');
-        if (active) {
-            badge.className = 'status-badge active';
-            text.textContent = `Tracking: ${topic}`;
-        } else {
-            badge.className = 'status-badge inactive';
-            text.textContent = 'Inactive';
+            document.getElementById('urlInput').value = '';
+            fetchStatus();
+        } catch (err) {
+            alert('Error: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '+ Add More Markets';
         }
     }
 
+    // ── Remove single market ─────────────────────────────────────────────────
+    async function removeMarket(ticker) {
+        try {
+            const resp = await fetch(`${API}/api/market/${encodeURIComponent(ticker)}`, {
+                method: 'DELETE',
+            });
+            if (!resp.ok) {
+                const d = await resp.json();
+                throw new Error(d.detail || 'Remove failed');
+            }
+            fetchStatus();
+        } catch (err) {
+            alert('Error removing market: ' + err.message);
+        }
+    }
+
+    // ── Stop all ─────────────────────────────────────────────────────────────
+    async function stopTracking() {
+        try { await fetch(`${API}/api/stop`, { method: 'POST' }); } catch {}
+        showInactiveUI();
+        stopPolling();
+    }
+
+    // ── UI helpers ───────────────────────────────────────────────────────────
+    function showActiveUI() {
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('infoBar').style.display = '';
+        document.getElementById('marketsSection').style.display = '';
+        document.getElementById('alertsSection').style.display = '';
+        document.getElementById('stopBtn').style.display = '';
+        document.getElementById('addBtn').style.display = '';
+
+        const badge = document.getElementById('statusBadge');
+        badge.className = 'status-badge active';
+        document.getElementById('statusText').textContent = 'Tracking';
+    }
+
+    function showInactiveUI() {
+        document.getElementById('stopBtn').style.display = 'none';
+        document.getElementById('addBtn').style.display = 'none';
+        const badge = document.getElementById('statusBadge');
+        badge.className = 'status-badge inactive';
+        document.getElementById('statusText').textContent = 'Inactive';
+    }
+
+    // ── Polling ──────────────────────────────────────────────────────────────
     function startPolling() {
         stopPolling();
         fetchStatus();
-        pollTimer = setInterval(fetchStatus, 5000);
+        pollTimer = setInterval(fetchStatus, 6000);
     }
 
     function stopPolling() {
-        if (pollTimer) {
-            clearInterval(pollTimer);
-            pollTimer = null;
-        }
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
     }
 
     async function fetchStatus() {
@@ -560,79 +441,120 @@
         } catch {}
     }
 
+    // ── Dashboard update ─────────────────────────────────────────────────────
     function updateDashboard(data) {
-        // Update info cards
-        document.getElementById('currentTopic').textContent = data.topic || '—';
         document.getElementById('marketCount').textContent = data.market_count || 0;
         document.getElementById('alertCount').textContent = (data.recent_alerts || []).length;
-        document.getElementById('threshold').textContent =
-            `${(data.threshold * 100).toFixed(0)}%`;
+        document.getElementById('priceThreshold').textContent =
+            data.price_threshold ? `${(data.price_threshold * 100).toFixed(0)}%` : '10%';
+        document.getElementById('volThreshold').textContent =
+            data.volume_threshold ? `${(data.volume_threshold * 100).toFixed(0)}%` : '10%';
 
-        if (data.is_running) {
-            setStatus(true, data.topic);
-            document.getElementById('stopBtn').style.display = '';
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('infoBar').style.display = '';
-            document.getElementById('marketsSection').style.display = '';
-            document.getElementById('alertsSection').style.display = '';
-        }
+        if (data.is_running) showActiveUI();
 
-        // Update markets table
+        // Markets table
         const tbody = document.getElementById('marketsBody');
         if (data.markets && data.markets.length > 0) {
             tbody.innerHTML = data.markets.map(m => {
-                const baseline = m.baseline_price;
-                const current = m.current_price ?? baseline;
-                const change = current - baseline;
-                const changeClass = change > 0.001 ? 'change-up' :
-                                    change < -0.001 ? 'change-down' : 'change-flat';
-                const changeSign = change > 0 ? '+' : '';
+                const base    = m.baseline_yes_price ?? 0;
+                const cur     = m.yes_price ?? base;
+                const dPrice  = cur - base;
+                const dVol    = m.volume - (m.baseline_volume ?? m.volume);
+                const pClass  = dPrice > 0.001 ? 'change-up' : dPrice < -0.001 ? 'change-down' : 'change-flat';
+                const vClass  = dVol   > 0      ? 'change-up' : dVol < 0 ? 'change-down' : 'change-flat';
+                const pSign   = dPrice > 0 ? '+' : '';
+                const vSign   = dVol   > 0 ? '+' : '';
+                const urlHtml = m.url
+                    ? `<a class="market-link" href="${escHtml(m.url)}" target="_blank">↗ View</a>`
+                    : '';
                 return `<tr>
-                    <td>${escHtml(m.title)}</td>
-                    <td class="price">${(baseline * 100).toFixed(1)}¢</td>
-                    <td class="price">${(current * 100).toFixed(1)}¢</td>
-                    <td class="price ${changeClass}">${changeSign}${(change * 100).toFixed(1)}¢</td>
+                    <td>
+                        <div style="font-weight:600;margin-bottom:3px;">${escHtml(m.title)}</div>
+                        <div style="font-size:11px;color:var(--text-dim);">${escHtml(m.ticker)}&nbsp;${urlHtml}</div>
+                    </td>
+                    <td class="price">${(base * 100).toFixed(1)}%</td>
+                    <td class="price">${(cur  * 100).toFixed(1)}%</td>
+                    <td class="price ${pClass}">${pSign}${(dPrice * 100).toFixed(1)}pp</td>
                     <td>$${Number(m.volume).toLocaleString()}</td>
+                    <td class="${vClass}">${vSign}$${Math.abs(dVol).toLocaleString()}</td>
+                    <td>
+                        <button class="remove-btn" title="Stop tracking" onclick="removeMarket('${escHtml(m.ticker)}')">✕</button>
+                    </td>
                 </tr>`;
             }).join('');
         } else {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:30px;">No markets found yet. The tracker is searching...</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:28px;">
+                Loading market data…</td></tr>`;
         }
 
-        // Update alerts
+        // Alerts
         const alertsList = document.getElementById('alertsList');
         const alerts = data.recent_alerts || [];
         if (alerts.length > 0) {
             alertsList.innerHTML = alerts.slice().reverse().map(a => {
-                const dir = a.direction === 'UP' ? 'up' : 'down';
-                const emoji = dir === 'up' ? '📈' : '📉';
+                const changes = a.changes || [];
+                const priceChange  = changes.find(c => c.type === 'PRICE');
+                const volumeChange = changes.find(c => c.type === 'VOLUME');
+
+                let colorClass = 'volume';
+                if (priceChange) colorClass = priceChange.direction === 'UP' ? 'up' : 'down';
+
+                const emoji = priceChange
+                    ? (priceChange.direction === 'UP' ? '📈' : '📉')
+                    : '📊';
+
                 const time = new Date(a.timestamp).toLocaleString();
-                return `<div class="alert-item ${dir}">
+
+                let changeHtml = '';
+                if (priceChange) {
+                    const dir = priceChange.direction === 'UP' ? 'change-up' : 'change-down';
+                    changeHtml += `<div class="${dir}">
+                        ⚡ Prediction: ${(priceChange.old*100).toFixed(1)}% → ${(priceChange.new*100).toFixed(1)}%
+                        (${priceChange.direction}, ${(priceChange.pct*100).toFixed(0)}% move)
+                    </div>`;
+                }
+                if (volumeChange) {
+                    changeHtml += `<div class="change-up">
+                        ⬆️ Volume: $${Number(volumeChange.old).toLocaleString()} →
+                        $${Number(volumeChange.new).toLocaleString()}
+                        (+${(volumeChange.pct*100).toFixed(0)}%)
+                    </div>`;
+                }
+
+                const urlHtml = a.url
+                    ? `<a class="market-link" href="${escHtml(a.url)}" target="_blank">View on Kalshi ↗</a>`
+                    : '';
+
+                return `<div class="alert-item ${colorClass}">
                     <div class="alert-header">
                         <div class="alert-title">${emoji} ${escHtml(a.title)}</div>
                         <div class="alert-time">${time}</div>
                     </div>
-                    <div class="alert-change ${dir === 'up' ? 'change-up' : 'change-down'}">
-                        ${(a.old_price * 100).toFixed(1)}¢ → ${(a.new_price * 100).toFixed(1)}¢
-                        (${a.direction} ${(Math.abs(a.new_price - a.old_price) * 100).toFixed(1)}¢)
+                    <div class="alert-meta">
+                        💰 Volume: $${Number(a.volume).toLocaleString()}
+                        &nbsp;•&nbsp;
+                        🎯 YES: ${a.yes_price != null ? (a.yes_price*100).toFixed(1)+'%' : '—'}
+                        ${urlHtml ? '&nbsp;•&nbsp;' + urlHtml : ''}
                     </div>
+                    <div class="alert-changes">${changeHtml}</div>
                     <div class="alert-analysis">${escHtml(a.analysis)}</div>
                 </div>`;
             }).join('');
         } else {
-            alertsList.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:30px;">No alerts yet. You\'ll see them here and on Telegram when markets move.</div>';
+            alertsList.innerHTML = `<div style="text-align:center;color:var(--text-dim);padding:28px;">
+                No alerts yet. You'll see them here and on Telegram when markets move.</div>`;
         }
     }
 
     function escHtml(str) {
         if (!str) return '';
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
     }
 
-    // Check status on load (in case tracker is already running)
-    fetchStatus().then(() => {});
+    // Check status on page load (tracker may already be running)
+    fetchStatus();
 </script>
 </body>
 </html>

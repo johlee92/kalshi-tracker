@@ -15,19 +15,15 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from config import Settings
-from tracker import PredictionTracker
+from tracker import PredictionTracker, parse_kalshi_url
 
-# Logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
 
-# Load settings
 settings = Settings()
-
-# Global tracker instance
 tracker: PredictionTracker = None
 
 
@@ -51,12 +47,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Kalshi Prediction Tracker",
-    description="Real-time prediction market sentiment tracker with AI-powered alerts",
-    version="1.0.0",
+    description="Real-time prediction market tracker with AI-powered Telegram alerts",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
-# CORS (allow the frontend)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -66,47 +61,78 @@ app.add_middleware(
 )
 
 
-# --- API Models ---
-
+# ── API models ──────────────────────────────────────────────────────────────
 
 class TrackRequest(BaseModel):
-    topic: str
+    urls: list[str]           # one or more Kalshi market URLs
 
 
-class SettingsUpdate(BaseModel):
-    poll_interval: int | None = None
-    min_volume: float | None = None
-    price_threshold: float | None = None
+class AddMarketsRequest(BaseModel):
+    urls: list[str]
 
 
-# --- API Routes ---
+class RemoveMarketRequest(BaseModel):
+    ticker: str
 
+
+# ── Routes ──────────────────────────────────────────────────────────────────
 
 @app.get("/health")
 async def health():
-    """Lightweight healthcheck — always returns 200 once the server is up."""
+    """Lightweight healthcheck — always 200 once the server is up."""
     return {"status": "ok"}
 
 
 @app.post("/api/track")
 async def start_tracking(req: TrackRequest):
-    """Start tracking a new topic."""
-    if not req.topic.strip():
-        raise HTTPException(400, "Topic cannot be empty")
+    """
+    Set (replace) the list of tracked markets.
+    Accepts one or more Kalshi market URLs.
+    """
+    urls = [u.strip() for u in req.urls if u.strip()]
+    if not urls:
+        raise HTTPException(400, "At least one URL is required.")
+
     missing = settings.missing_vars()
     if missing:
         raise HTTPException(
             400,
             f"Missing required environment variables: {', '.join(missing)}. "
-            "Add them in your Railway Variables settings."
+            "Add them in your Railway Variables settings.",
         )
-    await tracker.start_tracking(req.topic.strip())
-    return {"status": "ok", "topic": req.topic.strip()}
+
+    tickers = [parse_kalshi_url(u) for u in urls]
+    result = await tracker.set_markets(urls)
+    return {"status": "ok", "tickers": tickers, "loaded": result.get("loaded", [])}
+
+
+@app.post("/api/add")
+async def add_markets(req: AddMarketsRequest):
+    """Add more markets to the current tracking list without resetting."""
+    urls = [u.strip() for u in req.urls if u.strip()]
+    if not urls:
+        raise HTTPException(400, "At least one URL is required.")
+
+    missing = settings.missing_vars()
+    if missing:
+        raise HTTPException(400, f"Missing env vars: {', '.join(missing)}")
+
+    result = await tracker.add_markets(urls)
+    return {"status": "ok", **result}
+
+
+@app.delete("/api/market/{ticker}")
+async def remove_market(ticker: str):
+    """Remove a single market from tracking by its ticker."""
+    removed = tracker.remove_market(ticker)
+    if not removed:
+        raise HTTPException(404, f"Ticker '{ticker}' is not currently tracked.")
+    return {"status": "ok", "removed": ticker}
 
 
 @app.post("/api/stop")
 async def stop_tracking():
-    """Stop current tracking."""
+    """Stop all tracking."""
     if tracker:
         await tracker.stop_tracking()
     return {"status": "stopped"}
@@ -114,30 +140,13 @@ async def stop_tracking():
 
 @app.get("/api/status")
 async def get_status():
-    """Get current tracker status, markets, and recent alerts."""
+    """Return current tracker state and recent alerts for the dashboard."""
     if tracker is None:
-        return {"topic": None, "is_running": False, "market_count": 0,
-                "markets": [], "recent_alerts": []}
+        return {"is_running": False, "market_count": 0, "markets": [], "recent_alerts": []}
     return tracker.get_status()
 
 
-@app.patch("/api/settings")
-async def update_settings(update: SettingsUpdate):
-    """Update tracker settings on the fly."""
-    if update.poll_interval is not None:
-        tracker.poll_interval = max(10, update.poll_interval)
-    if update.min_volume is not None:
-        tracker.min_volume = max(0, update.min_volume)
-    if update.price_threshold is not None:
-        tracker.price_threshold = max(0.01, min(1.0, update.price_threshold))
-    return {
-        "poll_interval": tracker.poll_interval,
-        "min_volume": tracker.min_volume,
-        "price_threshold": tracker.price_threshold,
-    }
-
-
-# --- Serve Frontend ---
+# ── Frontend ─────────────────────────────────────────────────────────────────
 
 FRONTEND_DIR = Path(__file__).parent / "static"
 
@@ -150,7 +159,6 @@ async def serve_index():
     return {"message": "Kalshi Prediction Tracker API is running. Frontend not found."}
 
 
-# Mount static files (CSS, JS, etc.)
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
