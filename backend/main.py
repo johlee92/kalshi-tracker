@@ -82,11 +82,24 @@ class SettingsUpdate(BaseModel):
 # --- API Routes ---
 
 
+@app.get("/health")
+async def health():
+    """Lightweight healthcheck — always returns 200 once the server is up."""
+    return {"status": "ok"}
+
+
 @app.post("/api/track")
 async def start_tracking(req: TrackRequest):
     """Start tracking a new topic."""
     if not req.topic.strip():
         raise HTTPException(400, "Topic cannot be empty")
+    missing = settings.missing_vars()
+    if missing:
+        raise HTTPException(
+            400,
+            f"Missing required environment variables: {', '.join(missing)}. "
+            "Add them in your Railway Variables settings."
+        )
     await tracker.start_tracking(req.topic.strip())
     return {"status": "ok", "topic": req.topic.strip()}
 
@@ -94,13 +107,17 @@ async def start_tracking(req: TrackRequest):
 @app.post("/api/stop")
 async def stop_tracking():
     """Stop current tracking."""
-    await tracker.stop_tracking()
+    if tracker:
+        await tracker.stop_tracking()
     return {"status": "stopped"}
 
 
 @app.get("/api/status")
 async def get_status():
     """Get current tracker status, markets, and recent alerts."""
+    if tracker is None:
+        return {"topic": None, "is_running": False, "market_count": 0,
+                "markets": [], "recent_alerts": []}
     return tracker.get_status()
 
 
