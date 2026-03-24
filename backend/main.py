@@ -91,64 +91,65 @@ async def health():
 
 
 @app.get("/api/test-kalshi")
-async def test_kalshi(ticker: str = "kxtrump100-26"):
+async def test_kalshi():
     """
-    Diagnostic endpoint — hit this from a browser to verify Kalshi API
-    connectivity and see the raw response for a given ticker.
-    Usage: /api/test-kalshi?ticker=YOUR_TICKER
+    Diagnostic endpoint — fetches one live open market from the list,
+    then looks it up individually, proving the full pipeline works.
+    Hit: /api/test-kalshi
     """
     import httpx
-    base = "https://trading-api.kalshi.com/trade-api/v2/"
+    from kalshi_client import KalshiClient as KC
+    base = "https://api.elections.kalshi.com/trade-api/v2/"
     results = {}
 
     async with httpx.AsyncClient(base_url=base, timeout=15.0,
                                   headers={"Accept": "application/json"}) as client:
-        # Test 1: single market by ticker
-        try:
-            r = await client.get(f"markets/{ticker.upper()}")
-            if r.status_code == 200:
-                m = r.json().get("market", r.json())
-                from kalshi_client import KalshiClient
-                results["single_market"] = {
-                    "status_code": r.status_code,
-                    "url_called": str(r.url),
-                    "ticker": m.get("ticker"),
-                    "title": m.get("title"),
-                    "status": m.get("status"),
-                    "last_price_dollars": m.get("last_price_dollars"),
-                    "yes_bid_dollars": m.get("yes_bid_dollars"),
-                    "yes_ask_dollars": m.get("yes_ask_dollars"),
-                    "volume_fp": m.get("volume_fp"),
-                    "parsed_yes_price": KalshiClient.get_yes_price(m),
-                    "parsed_volume": KalshiClient._parse_volume(m),
-                }
-            else:
-                results["single_market"] = {
-                    "status_code": r.status_code,
-                    "url_called": str(r.url),
-                    "body": r.text[:500],
-                }
-        except Exception as e:
-            results["single_market"] = {"error": str(e)}
 
-        # Test 2: list markets — grab a real open ticker as a working example
+        # Step 1: get one open market from the list
+        open_ticker = None
         try:
-            r2 = await client.get("markets", params={"limit": 1, "status": "open"})
-            body = r2.json() if r2.status_code == 200 else r2.text[:500]
-            sample = body.get("markets", [{}])[0] if isinstance(body, dict) else {}
-            from kalshi_client import KalshiClient
-            results["market_list"] = {
-                "status_code": r2.status_code,
-                "url_called": str(r2.url),
-                "example_open_ticker": sample.get("ticker"),
-                "example_open_title": sample.get("title"),
-                "example_open_status": sample.get("status"),
-                "example_parsed_yes_price": KalshiClient.get_yes_price(sample),
-                "example_parsed_volume": KalshiClient._parse_volume(sample),
-                "hint": f"Try: /api/test-kalshi?ticker={sample.get('ticker', 'TICKER')}",
+            r = await client.get("markets", params={"limit": 1, "status": "open"})
+            body = r.json() if r.status_code == 200 else {}
+            sample = (body.get("markets") or [{}])[0]
+            open_ticker = sample.get("ticker")
+            results["step1_list"] = {
+                "status_code": r.status_code,
+                "url_called": str(r.url),
+                "found_ticker": open_ticker,
+                "found_title": sample.get("title"),
+                "parsed_yes_price": KC.get_yes_price(sample),
+                "parsed_volume": KC._parse_volume(sample),
             }
         except Exception as e:
-            results["market_list"] = {"error": str(e)}
+            results["step1_list"] = {"error": str(e)}
+
+        # Step 2: look up that same ticker individually
+        if open_ticker:
+            try:
+                r2 = await client.get(f"markets/{open_ticker}")
+                if r2.status_code == 200:
+                    m = r2.json().get("market") or r2.json()
+                    results["step2_single_lookup"] = {
+                        "status_code": r2.status_code,
+                        "url_called": str(r2.url),
+                        "ticker": m.get("ticker"),
+                        "title": m.get("title"),
+                        "status": m.get("status"),
+                        "parsed_yes_price": KC.get_yes_price(m),
+                        "parsed_volume": KC._parse_volume(m),
+                        "verdict": "✅ Full pipeline working — list AND single lookup both work",
+                    }
+                else:
+                    results["step2_single_lookup"] = {
+                        "status_code": r2.status_code,
+                        "url_called": str(r2.url),
+                        "body": r2.text[:500],
+                        "verdict": "❌ Single lookup failed even for a live open ticker",
+                    }
+            except Exception as e:
+                results["step2_single_lookup"] = {"error": str(e)}
+        else:
+            results["step2_single_lookup"] = {"skipped": "No open ticker found in step 1"}
 
     return results
 

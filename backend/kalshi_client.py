@@ -15,7 +15,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-KALSHI_BASE = "https://trading-api.kalshi.com/trade-api/v2/"  # trailing slash required for httpx path merging
+KALSHI_BASE = "https://api.elections.kalshi.com/trade-api/v2/"  # trailing slash required for httpx path merging
 
 # Retry settings
 MAX_RETRIES = 5
