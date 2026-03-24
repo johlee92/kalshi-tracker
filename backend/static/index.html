@@ -161,11 +161,18 @@
         .change-down { color: var(--red); }
         .change-flat { color: var(--text-dim); }
         .remove-btn {
-            background: none; border: none; cursor: pointer;
-            color: var(--text-dim); font-size: 16px; padding: 2px 6px;
-            border-radius: 4px; transition: color .15s;
+            background: rgba(255,107,107,.08);
+            border: 1px solid rgba(255,107,107,.2);
+            cursor: pointer;
+            color: var(--red);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            transition: background .15s, transform .1s;
+            white-space: nowrap;
         }
-        .remove-btn:hover { color: var(--red); }
+        .remove-btn:hover { background: rgba(255,107,107,.2); transform: scale(1.05); }
         .market-link { color: var(--accent); text-decoration: none; font-size: 12px; }
         .market-link:hover { text-decoration: underline; }
 
@@ -396,8 +403,14 @@
     // ── Stop all ─────────────────────────────────────────────────────────────
     async function stopTracking() {
         try { await fetch(`${API}/api/stop`, { method: 'POST' }); } catch {}
-        showInactiveUI();
         stopPolling();
+        showInactiveUI();
+        // Hide markets/info sections since nothing is tracked
+        document.getElementById('marketsSection').style.display = 'none';
+        document.getElementById('infoBar').style.display = 'none';
+        document.getElementById('alertsSection').style.display = 'none';
+        document.getElementById('emptyState').style.display = '';
+        document.getElementById('marketsBody').innerHTML = '';
     }
 
     // ── UI helpers ───────────────────────────────────────────────────────────
@@ -414,6 +427,14 @@
         document.getElementById('statusText').textContent = 'Tracking';
     }
 
+    function showMarketsOnly() {
+        // Show market data even if tracker reports is_running=false (e.g. brief restart)
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('infoBar').style.display = '';
+        document.getElementById('marketsSection').style.display = '';
+        document.getElementById('alertsSection').style.display = '';
+    }
+
     function showInactiveUI() {
         document.getElementById('stopBtn').style.display = 'none';
         document.getElementById('addBtn').style.display = 'none';
@@ -425,7 +446,7 @@
     // ── Polling ──────────────────────────────────────────────────────────────
     function startPolling() {
         stopPolling();
-        fetchStatus();
+        fetchStatus(); // immediate fetch, then start interval
         pollTimer = setInterval(fetchStatus, 6000);
     }
 
@@ -450,14 +471,23 @@
         document.getElementById('volThreshold').textContent =
             data.volume_threshold ? `${(data.volume_threshold * 100).toFixed(0)}%` : '10%';
 
+        const hasMarkets = data.markets && data.markets.length > 0;
+
         if (data.is_running) {
             showActiveUI();
-            if (!pollTimer) startPolling(); // auto-resume polling on page load
+            // Auto-resume 6-second polling when tracker is already running
+            // (e.g. opened in a new browser tab). Guard against re-entry.
+            if (!pollTimer) {
+                pollTimer = setInterval(fetchStatus, 6000);
+            }
+        } else if (hasMarkets) {
+            // Tracker not running yet but markets exist — still show them
+            showMarketsOnly();
         }
 
         // Markets table
         const tbody = document.getElementById('marketsBody');
-        if (data.markets && data.markets.length > 0) {
+        if (hasMarkets) {
             tbody.innerHTML = data.markets.map(m => {
                 const base    = m.baseline_yes_price ?? 0;
                 const cur     = m.yes_price ?? base;
@@ -473,7 +503,7 @@
                 return `<tr>
                     <td>
                         <div style="font-weight:600;margin-bottom:3px;">${escHtml(m.title)}</div>
-                        <div style="font-size:11px;color:var(--text-dim);">${escHtml(m.ticker)}&nbsp;${urlHtml}</div>
+                        <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">${escHtml(m.ticker)}&nbsp;&nbsp;${urlHtml}</div>
                     </td>
                     <td class="price">${(base * 100).toFixed(1)}%</td>
                     <td class="price">${(cur  * 100).toFixed(1)}%</td>
@@ -481,13 +511,14 @@
                     <td>$${Number(m.volume).toLocaleString()}</td>
                     <td class="${vClass}">${vSign}$${Math.abs(dVol).toLocaleString()}</td>
                     <td>
-                        <button class="remove-btn" title="Stop tracking" onclick="removeMarket('${escHtml(m.ticker)}')">✕</button>
+                        <button class="remove-btn" title="Remove from tracking"
+                            onclick="removeMarket('${escHtml(m.ticker)}')">✕ Remove</button>
                     </td>
                 </tr>`;
             }).join('');
-        } else {
+        } else if (data.is_running) {
             tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:28px;">
-                Loading market data…</td></tr>`;
+                <span class="spinner"></span> Loading market data…</td></tr>`;
         }
 
         // Alerts
