@@ -450,7 +450,10 @@
         document.getElementById('volThreshold').textContent =
             data.volume_threshold ? `${(data.volume_threshold * 100).toFixed(0)}%` : '10%';
 
-        if (data.is_running) showActiveUI();
+        if (data.is_running) {
+            showActiveUI();
+            if (!pollTimer) startPolling(); // auto-resume polling on page load
+        }
 
         // Markets table
         const tbody = document.getElementById('marketsBody');

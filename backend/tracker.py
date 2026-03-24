@@ -14,8 +14,10 @@ Architecture:
 """
 
 import asyncio
+import json
 import logging
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 from zoneinfo import ZoneInfo
 
@@ -38,6 +40,9 @@ LA_TZ = ZoneInfo("America/Los_Angeles")
 # --------------------------------------------------------------------------
 PRICE_THRESHOLD  = 0.10   # 10 % relative move in YES probability
 VOLUME_THRESHOLD = 0.10   # 10 % increase in total volume
+
+# Persisted state file — survives server restarts within the same deployment
+STATE_FILE = Path(__file__).parent / "tracker_state.json"
 
 
 # --------------------------------------------------------------------------
@@ -170,6 +175,7 @@ class PredictionTracker:
                 f"Will retry at next check (7 AM – 9 PM PT, every 2 hours).",
             )
 
+        self._save_state()
         self._task = asyncio.create_task(self._poll_loop())
         return result
 
@@ -203,6 +209,7 @@ class PredictionTracker:
                 added.append(ticker)
 
         logger.info(f"Added {len(added)} markets: {added}")
+        self._save_state()
         return {"added": added}
 
     def remove_market(self, ticker: str) -> bool:
@@ -214,6 +221,7 @@ class PredictionTracker:
             m for m in self.tracked_markets if m.get("ticker") != ticker
         ]
         logger.info(f"Removed market: {ticker}")
+        self._save_state()
         return found
 
     async def stop_tracking(self, notify: bool = True):
@@ -233,6 +241,9 @@ class PredictionTracker:
                 self.telegram_chat_id,
                 f"🔴 Tracking stopped ({len(self.tracked_urls)} markets removed).",
             )
+            # Clear saved state so markets don't auto-restore on next server start
+            self.tracked_urls = {}
+            self._save_state()
         logger.info("Tracker stopped")
 
     # ------------------------------------------------------------------
@@ -414,6 +425,50 @@ class PredictionTracker:
             except Exception as e:
                 logger.error(f"Poll loop error: {e}")
                 await asyncio.sleep(5)
+
+    # ------------------------------------------------------------------
+    # State persistence
+    # ------------------------------------------------------------------
+
+    def _save_state(self):
+        """Write tracked URLs to disk so they survive server restarts."""
+        try:
+            STATE_FILE.write_text(
+                json.dumps({"tracked_urls": self.tracked_urls}, indent=2)
+            )
+            logger.info(f"State saved: {len(self.tracked_urls)} market(s)")
+        except Exception as e:
+            logger.error(f"Failed to save state: {e}")
+
+    @classmethod
+    def _load_saved_urls(cls) -> dict[str, str]:
+        """Read previously saved tracked URLs from disk. Returns {} if none."""
+        try:
+            if STATE_FILE.exists():
+                data = json.loads(STATE_FILE.read_text())
+                urls = data.get("tracked_urls", {})
+                if urls:
+                    logger.info(f"Loaded {len(urls)} saved market(s) from {STATE_FILE}")
+                return urls
+        except Exception as e:
+            logger.error(f"Failed to load saved state: {e}")
+        return {}
+
+    async def restore_markets(self, tracked_urls: dict[str, str]):
+        """
+        Re-establish tracking from a previously saved URL map, silently
+        (no Telegram notification). Called on server startup.
+        """
+        if not tracked_urls:
+            return
+        self.tracked_urls = dict(tracked_urls)
+        self.is_running = True
+        await self._fetch_and_set_baseline()
+        logger.info(
+            f"Restored tracking for {len(self.baseline)} market(s) "
+            f"from saved state"
+        )
+        self._task = asyncio.create_task(self._poll_loop())
 
     # ------------------------------------------------------------------
     # Status (for dashboard API)

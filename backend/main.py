@@ -39,6 +39,13 @@ async def lifespan(app: FastAPI):
         price_threshold=settings.price_change_threshold,
     )
     logger.info("Prediction Tracker initialized")
+
+    # Restore any markets that were being tracked before the server restarted
+    saved = PredictionTracker._load_saved_urls()
+    if saved:
+        logger.info(f"Auto-restoring {len(saved)} saved market(s) on startup")
+        await tracker.restore_markets(saved)
+
     yield
     await tracker.stop_tracking(notify=False)
     await tracker.kalshi.close()
