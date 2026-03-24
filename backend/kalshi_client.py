@@ -15,7 +15,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-KALSHI_BASE = "https://api.elections.kalshi.com/trade-api/v2"
+KALSHI_BASE = "https://api.elections.kalshi.com/trade-api/v2/"  # trailing slash required for httpx path merging
 
 # Retry settings
 MAX_RETRIES = 5
@@ -81,7 +81,7 @@ class KalshiClient:
         params = {"status": status, "limit": limit}
         if cursor:
             params["cursor"] = cursor
-        resp = await self._request_with_retry("GET", "/markets", params=params)
+        resp = await self._request_with_retry("GET", "markets", params=params)
         return resp.json()
 
     async def get_all_open_markets(self) -> list[dict]:
@@ -110,8 +110,10 @@ class KalshiClient:
     async def get_market(self, ticker: str) -> Optional[dict]:
         """Get a single market by ticker. Returns None if not found."""
         try:
-            resp = await self._request_with_retry("GET", f"/markets/{ticker}")
-            return resp.json().get("market", {})
+            resp = await self._request_with_retry("GET", f"markets/{ticker}")
+            data = resp.json()
+            market = data.get("market") or data  # handle both wrapped and unwrapped responses
+            return market if market else None
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
                 logger.warning(f"Market {ticker} not found (404), may have closed")
@@ -135,7 +137,7 @@ class KalshiClient:
 
     async def get_event(self, event_ticker: str) -> dict:
         """Get an event and its markets."""
-        resp = await self._request_with_retry("GET", f"/events/{event_ticker}")
+        resp = await self._request_with_retry("GET", f"events/{event_ticker}")
         return resp.json()
 
     async def search_markets_by_topic(

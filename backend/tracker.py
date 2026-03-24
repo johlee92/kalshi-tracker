@@ -256,8 +256,10 @@ class PredictionTracker:
             return {"loaded": [], "failed": []}
 
         tickers = list(self.tracked_urls.keys())
+        logger.info(f"Fetching baseline for tickers: {tickers}")
         markets = await self.kalshi.get_markets_batch(tickers)
         self.tracked_markets = markets
+        logger.info(f"API returned {len(markets)} market(s) for {len(tickers)} ticker(s)")
 
         loaded = []
         for m in markets:
@@ -265,11 +267,21 @@ class PredictionTracker:
             yes_price = KalshiClient.get_yes_price(m)
             volume    = KalshiClient._parse_volume(m)
             url       = self.tracked_urls.get(ticker, "")
+            logger.info(
+                f"Market data — ticker={ticker!r} title={m.get('title')!r} "
+                f"last_price={m.get('last_price')} yes_bid={m.get('yes_bid')} "
+                f"yes_price={yes_price} volume={volume}"
+            )
             if ticker and yes_price is not None:
                 self.baseline[ticker] = MarketSnapshot(
                     ticker, m.get("title", ticker), url, yes_price, volume
                 )
                 loaded.append(ticker)
+            else:
+                logger.warning(
+                    f"Skipped {ticker!r}: yes_price={yes_price} "
+                    f"(market keys: {list(m.keys())})"
+                )
 
         failed = [t for t in tickers if t not in self.baseline]
         if failed:
@@ -476,6 +488,8 @@ class PredictionTracker:
 
     def get_status(self) -> dict:
         markets_info = []
+
+        # Markets with a loaded baseline — show full price/volume data
         for ticker, snap in self.baseline.items():
             current = next(
                 (m for m in self.tracked_markets if m.get("ticker") == ticker),
@@ -492,11 +506,27 @@ class PredictionTracker:
                 "volume":             cur_vol,
                 "baseline_volume":    snap.volume,
                 "baseline_set_at":    snap.timestamp.isoformat(),
+                "loading":            False,
             })
+
+        # Markets tracked but baseline not yet loaded (e.g. API call failed)
+        for ticker, url in self.tracked_urls.items():
+            if ticker not in self.baseline:
+                markets_info.append({
+                    "ticker":             ticker,
+                    "title":              ticker,   # placeholder until API loads
+                    "url":                url,
+                    "yes_price":          None,
+                    "baseline_yes_price": None,
+                    "volume":             None,
+                    "baseline_volume":    None,
+                    "baseline_set_at":    None,
+                    "loading":            True,
+                })
 
         return {
             "is_running":       self.is_running,
-            "market_count":     len(self.baseline),
+            "market_count":     len(self.tracked_urls),
             "markets":          markets_info,
             "recent_alerts":    self.alert_log[-10:],
             "price_threshold":  self.price_threshold,

@@ -500,6 +500,22 @@
                 const urlHtml = m.url
                     ? `<a class="market-link" href="${escHtml(m.url)}" target="_blank">↗ View</a>`
                     : '';
+                if (m.loading) {
+                    // Baseline hasn't loaded from API yet — show pending row
+                    return `<tr>
+                        <td>
+                            <div style="font-weight:600;margin-bottom:3px;color:var(--text-dim);">
+                                <span class="spinner"></span> Loading…
+                            </div>
+                            <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">${escHtml(m.ticker)}&nbsp;&nbsp;${urlHtml}</div>
+                        </td>
+                        <td colspan="5" style="color:var(--text-dim);font-size:12px;">Fetching market data…</td>
+                        <td>
+                            <button class="remove-btn" title="Remove from tracking"
+                                onclick="removeMarket('${escHtml(m.ticker)}')">✕ Remove</button>
+                        </td>
+                    </tr>`;
+                }
                 return `<tr>
                     <td>
                         <div style="font-weight:600;margin-bottom:3px;">${escHtml(m.title)}</div>
