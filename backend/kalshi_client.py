@@ -184,22 +184,41 @@ class KalshiClient:
 
     @staticmethod
     def _parse_volume(market: dict) -> float:
-        """Extract volume in dollars from a market object."""
-        vol = market.get("volume", 0)
-        if isinstance(vol, (int, float)):
-            return float(vol)
-        vol_24h = market.get("volume_24h", 0)
-        if isinstance(vol_24h, (int, float)):
-            return float(vol_24h)
+        """Extract volume in dollars from a market object.
+
+        Kalshi API v2 uses 'volume_fp' (full-precision) and 'volume_24h_fp'.
+        Older/alternate responses may use 'volume' or 'volume_24h'.
+        """
+        for key in ("volume_fp", "volume", "volume_24h_fp", "volume_24h"):
+            val = market.get(key)
+            if val is not None:
+                try:
+                    return float(val)
+                except (TypeError, ValueError):
+                    continue
         return 0.0
 
     @staticmethod
     def get_yes_price(market: dict) -> Optional[float]:
-        """Get the current YES price (probability) as a float 0-1."""
-        last = market.get("last_price")
-        if last is not None:
-            return float(last) / 100.0 if float(last) > 1 else float(last)
-        yes_bid = market.get("yes_bid")
-        if yes_bid is not None:
-            return float(yes_bid) / 100.0 if float(yes_bid) > 1 else float(yes_bid)
+        """Get the current YES price (probability) as a float 0-1.
+
+        Kalshi API v2 uses '_dollars' suffix fields (values are 0-1 range).
+        Older responses used 'last_price' / 'yes_bid' (values 0-100 cents).
+        """
+        # New API field names (values already in 0-1 dollar range)
+        for key in ("last_price_dollars", "yes_bid_dollars", "yes_ask_dollars",
+                    "previous_price_dollars", "previous_yes_bid_dollars"):
+            val = market.get(key)
+            if val is not None:
+                price = float(val)
+                # Sanity-check: if somehow > 1 it was passed in cents, normalise
+                return price / 100.0 if price > 1 else price
+
+        # Legacy field names (values in 0-100 cents)
+        for key in ("last_price", "yes_bid", "yes_ask"):
+            val = market.get(key)
+            if val is not None:
+                price = float(val)
+                return price / 100.0 if price > 1 else price
+
         return None

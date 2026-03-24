@@ -60,8 +60,12 @@ def parse_kalshi_url(raw: str) -> str:
     """
     raw = raw.strip()
     if raw.startswith("http"):
-        return raw.rstrip("/").split("/")[-1]
-    return raw
+        ticker = raw.rstrip("/").split("/")[-1]
+    else:
+        ticker = raw
+    # Kalshi API tickers are uppercase (e.g. KXGOVCA-26),
+    # but web URLs use lowercase slugs — normalise here.
+    return ticker.upper()
 
 
 # --------------------------------------------------------------------------

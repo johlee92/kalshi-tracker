@@ -105,12 +105,29 @@ async def test_kalshi(ticker: str = "kxtrump100-26"):
                                   headers={"Accept": "application/json"}) as client:
         # Test 1: single market by ticker
         try:
-            r = await client.get(f"markets/{ticker}")
-            results["single_market"] = {
-                "status_code": r.status_code,
-                "url_called": str(r.url),
-                "body": r.json() if r.status_code == 200 else r.text[:500],
-            }
+            r = await client.get(f"markets/{ticker.upper()}")
+            if r.status_code == 200:
+                m = r.json().get("market", r.json())
+                from kalshi_client import KalshiClient
+                results["single_market"] = {
+                    "status_code": r.status_code,
+                    "url_called": str(r.url),
+                    "ticker": m.get("ticker"),
+                    "title": m.get("title"),
+                    "status": m.get("status"),
+                    "last_price_dollars": m.get("last_price_dollars"),
+                    "yes_bid_dollars": m.get("yes_bid_dollars"),
+                    "yes_ask_dollars": m.get("yes_ask_dollars"),
+                    "volume_fp": m.get("volume_fp"),
+                    "parsed_yes_price": KalshiClient.get_yes_price(m),
+                    "parsed_volume": KalshiClient._parse_volume(m),
+                }
+            else:
+                results["single_market"] = {
+                    "status_code": r.status_code,
+                    "url_called": str(r.url),
+                    "body": r.text[:500],
+                }
         except Exception as e:
             results["single_market"] = {"error": str(e)}
 
