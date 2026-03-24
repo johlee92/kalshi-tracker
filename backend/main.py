@@ -90,6 +90,46 @@ async def health():
     return {"status": "ok"}
 
 
+@app.get("/api/test-kalshi")
+async def test_kalshi(ticker: str = "kxtrump100-26"):
+    """
+    Diagnostic endpoint — hit this from a browser to verify Kalshi API
+    connectivity and see the raw response for a given ticker.
+    Usage: /api/test-kalshi?ticker=YOUR_TICKER
+    """
+    import httpx
+    base = "https://api.elections.kalshi.com/trade-api/v2/"
+    results = {}
+
+    async with httpx.AsyncClient(base_url=base, timeout=15.0,
+                                  headers={"Accept": "application/json"}) as client:
+        # Test 1: single market by ticker
+        try:
+            r = await client.get(f"markets/{ticker}")
+            results["single_market"] = {
+                "status_code": r.status_code,
+                "url_called": str(r.url),
+                "body": r.json() if r.status_code == 200 else r.text[:500],
+            }
+        except Exception as e:
+            results["single_market"] = {"error": str(e)}
+
+        # Test 2: list markets (1 result)
+        try:
+            r2 = await client.get("markets", params={"limit": 1, "status": "open"})
+            body = r2.json() if r2.status_code == 200 else r2.text[:500]
+            sample = body.get("markets", [body])[0] if isinstance(body, dict) else body
+            results["market_list"] = {
+                "status_code": r2.status_code,
+                "url_called": str(r2.url),
+                "sample_market_keys": list(sample.keys()) if isinstance(sample, dict) else sample,
+            }
+        except Exception as e:
+            results["market_list"] = {"error": str(e)}
+
+    return results
+
+
 @app.post("/api/track")
 async def start_tracking(req: TrackRequest):
     """
