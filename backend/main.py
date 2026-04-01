@@ -91,11 +91,11 @@ async def health():
 
 
 @app.get("/api/test-kalshi")
-async def test_kalshi():
+async def test_kalshi(ticker: str = ""):
     """
-    Diagnostic endpoint — fetches one live open market from the list,
-    then looks it up individually, proving the full pipeline works.
-    Hit: /api/test-kalshi
+    Diagnostic endpoint.
+    - With ?ticker=KXPGAMASTERS-26  → looks up that specific ticker and shows raw fields
+    - Without ticker param           → fetches the first open market and self-tests the pipeline
     """
     import httpx
     from kalshi_client import KalshiClient as KC
@@ -105,51 +105,79 @@ async def test_kalshi():
     async with httpx.AsyncClient(base_url=base, timeout=15.0,
                                   headers={"Accept": "application/json"}) as client:
 
-        # Step 1: get one open market from the list
-        open_ticker = None
-        try:
-            r = await client.get("markets", params={"limit": 1, "status": "open"})
-            body = r.json() if r.status_code == 200 else {}
-            sample = (body.get("markets") or [{}])[0]
-            open_ticker = sample.get("ticker")
-            results["step1_list"] = {
-                "status_code": r.status_code,
-                "url_called": str(r.url),
-                "found_ticker": open_ticker,
-                "found_title": sample.get("title"),
-                "parsed_yes_price": KC.get_yes_price(sample),
-                "parsed_volume": KC._parse_volume(sample),
-            }
-        except Exception as e:
-            results["step1_list"] = {"error": str(e)}
-
-        # Step 2: look up that same ticker individually
-        if open_ticker:
+        if ticker:
+            # Look up the specific ticker the user asked about
+            t = ticker.upper()
             try:
-                r2 = await client.get(f"markets/{open_ticker}")
-                if r2.status_code == 200:
-                    m = r2.json().get("market") or r2.json()
-                    results["step2_single_lookup"] = {
-                        "status_code": r2.status_code,
-                        "url_called": str(r2.url),
+                r = await client.get(f"markets/{t}")
+                if r.status_code == 200:
+                    m = r.json().get("market") or r.json()
+                    # Show ALL dollar/price/volume fields so we can see what's populated
+                    price_fields = {k: v for k, v in m.items()
+                                    if any(x in k for x in ("price", "bid", "ask", "volume", "liquidity"))}
+                    results["ticker_lookup"] = {
+                        "status_code": 200,
+                        "url_called": str(r.url),
                         "ticker": m.get("ticker"),
                         "title": m.get("title"),
                         "status": m.get("status"),
+                        "all_price_volume_fields": price_fields,
                         "parsed_yes_price": KC.get_yes_price(m),
                         "parsed_volume": KC._parse_volume(m),
-                        "verdict": "✅ Full pipeline working — list AND single lookup both work",
+                        "verdict": "✅ Ticker found" if KC.get_yes_price(m) is not None else "⚠️ Ticker found but yes_price is None — check price fields above",
                     }
                 else:
-                    results["step2_single_lookup"] = {
-                        "status_code": r2.status_code,
-                        "url_called": str(r2.url),
-                        "body": r2.text[:500],
-                        "verdict": "❌ Single lookup failed even for a live open ticker",
+                    results["ticker_lookup"] = {
+                        "status_code": r.status_code,
+                        "url_called": str(r.url),
+                        "body": r.text[:300],
+                        "verdict": "❌ Ticker not found (404 = closed/resolved market)",
                     }
             except Exception as e:
-                results["step2_single_lookup"] = {"error": str(e)}
+                results["ticker_lookup"] = {"error": str(e)}
+
         else:
-            results["step2_single_lookup"] = {"skipped": "No open ticker found in step 1"}
+            # Self-test: fetch open market from list, then look it up individually
+            open_ticker = None
+            try:
+                r = await client.get("markets", params={"limit": 1, "status": "open"})
+                body = r.json() if r.status_code == 200 else {}
+                sample = (body.get("markets") or [{}])[0]
+                open_ticker = sample.get("ticker")
+                results["step1_list"] = {
+                    "status_code": r.status_code,
+                    "url_called": str(r.url),
+                    "found_ticker": open_ticker,
+                    "found_title": sample.get("title"),
+                    "parsed_yes_price": KC.get_yes_price(sample),
+                    "parsed_volume": KC._parse_volume(sample),
+                }
+            except Exception as e:
+                results["step1_list"] = {"error": str(e)}
+
+            if open_ticker:
+                try:
+                    r2 = await client.get(f"markets/{open_ticker}")
+                    if r2.status_code == 200:
+                        m = r2.json().get("market") or r2.json()
+                        results["step2_single_lookup"] = {
+                            "status_code": 200,
+                            "url_called": str(r2.url),
+                            "ticker": m.get("ticker"),
+                            "title": m.get("title"),
+                            "status": m.get("status"),
+                            "parsed_yes_price": KC.get_yes_price(m),
+                            "parsed_volume": KC._parse_volume(m),
+                            "verdict": "✅ Full pipeline working",
+                        }
+                    else:
+                        results["step2_single_lookup"] = {
+                            "status_code": r2.status_code,
+                            "body": r2.text[:300],
+                            "verdict": "❌ Single lookup failed",
+                        }
+                except Exception as e:
+                    results["step2_single_lookup"] = {"error": str(e)}
 
     return results
 
